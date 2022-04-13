@@ -15,12 +15,12 @@
     "node": "16.13.1"
   },
   "scripts": {
-    "server-dev": "yarn workspace server nodemon",
-    "web-dev": "yarn workspace web start",
-    "start": "yarn workspace server nodemon && yarn workspace web start",
-    "startOld": "run-p server-dev web-dev"
+    "start": "yarn workspace server start",
+    "server": "yarn workspace server nodemon",
+    "web": "yarn workspace web start",
+    "build": "yarn workspace web run build",
+    "dev": "yarn server & yarn web",
+    "heroku-postbuild": "yarn build"
   },
-  "devDependencies": {
-    "npm-run-all": "^4.1.5"
-  }
+  "devDependencies": {}
 }
