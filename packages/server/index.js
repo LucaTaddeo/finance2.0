@@ -2,7 +2,25 @@ const express = require("express");
 
 const app = express();
 const path = require("path");
-const PORT = process.env.PORT || 3000
+const mongoose = require("mongoose");
+
+require("dotenv").config();
+
+const PORT = process.env.PORT || 3000;
+
+try {
+    mongoose.connect(
+        process.env.MONGODB_CONNECTION_STRING,
+        {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        },
+        () => console.log("MongoDB has been connected")
+    );
+} catch (e) {
+    console.log(e);
+}
+
 
 app.get('/api', (req, res) => {
     res.json({"message": "Hello World!"});
