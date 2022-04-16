@@ -15,8 +15,8 @@
     "swagger-ui-express": "^4.3.0"
   },
   "scripts": {
-    "nodemon": "nodemon index.js",
-    "start": "node index.js",
-    "swagger-autogen": "node swagger.js"
+    "nodemon": "node swagger.js && nodemon index.js",
+    "start": "node swagger.js && node index.js",
+    "generate-docs": "node swagger.js"
   }
 }

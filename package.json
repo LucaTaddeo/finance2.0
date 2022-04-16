@@ -20,7 +20,8 @@
     "web": "yarn workspace web start",
     "build": "yarn workspace web run build",
     "dev": "yarn server & yarn web",
-    "heroku-postbuild": "yarn build"
+    "heroku-postbuild": "yarn build",
+    "docs": "yarn workspace server run generate-docs"
   },
   "devDependencies": {},
   "dependencies": {
