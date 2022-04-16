@@ -1,8 +1,10 @@
 const express = require("express");
-
-const app = express();
 const path = require("path");
 const mongoose = require("mongoose");
+const bodyParser = require('body-parser');
+
+const app = express();
+app.use(bodyParser.json());
 
 require("dotenv").config();
 
@@ -15,16 +17,25 @@ try {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         },
-        () => console.log("MongoDB has been connected")
+        () => console.log("MongoDB connected")
     );
 } catch (e) {
     console.log(e);
 }
 
+const apiRoot = "/api/v1";
 
-app.get('/api', (req, res) => {
-    res.json({"message": "Hello World!"});
-});
+const health = require("./routes/health");
+const authentication = require("./routes/authentication");
+const users = require("./routes/users");
+const bankAccounts = require("./routes/bankAccounts");
+const transactions = require("./routes/transactions");
+
+app.use(apiRoot + "/health", health)
+app.use(apiRoot + "/auth", authentication)
+app.use(apiRoot + "/users", users)
+app.use(apiRoot + "/bankAccounts", bankAccounts)
+app.use(apiRoot + "/transactions", transactions)
 
 if (process.env.NODE_ENV === "production" || process.env.NODE_ENV === "staging") {
     app.use(express.static("../web/build"));
@@ -32,6 +43,5 @@ if (process.env.NODE_ENV === "production" || process.env.NODE_ENV === "staging")
         res.sendFile(path.join(__dirname + "../web/build/index.html"));
     });
 }
-
 
 app.listen(PORT)
