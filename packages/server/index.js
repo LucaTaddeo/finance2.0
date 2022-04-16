@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const bodyParser = require('body-parser');
 
 const app = express();
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 require("dotenv").config();
@@ -17,7 +18,10 @@ try {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         },
-        () => console.log("MongoDB connected")
+        (err) => {
+            if(err) console.log(err)
+            else console.log("MongoDB is connected");
+        }
     );
 } catch (e) {
     console.log(e);
