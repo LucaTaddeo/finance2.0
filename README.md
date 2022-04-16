@@ -12,3 +12,5 @@ The package.json file defines many different scripts. The most useful ones are f
 - `yarn dev`: starts the whole application in dev mode, with hot reload (note: client will start on different port)
 - `yarn build` and `yarn heroku-postbuild`: builds the React application
 - `yarn start`: starts the Express server, serving both api and static React build
+- `yarn docs`: generates the Swagger documentation for the api, using an automatic swagger generator. Documentation is
+served under the `/api/v1/docs` url
