@@ -55,8 +55,8 @@ const doc = {
     // },
     definitions: {
         User: {
-            username: "mariorossi",
-            password: "password",
+            $username: "mariorossi",
+            $password: "password",
             firstName: "Mario",
             lastName: "Rossi",
             bankAccounts: [
@@ -64,18 +64,18 @@ const doc = {
             ],
         },
         BankAccount: {
-            name: "N26",
+            $name: "N26",
             description: "My personal Bank Account",
-            balance: 1000,
-            foreseenBalance: -500,
+            $balance: 1000,
+            $foreseenBalance: -500,
             transactions: {$ref: "#/definitions/Transaction"},
-            accountType: BankAccountTypes,
+            $accountType: BankAccountTypes,
 
         },
         Transaction: {
-            title: "Netflix Subscription",
+            $title: "Netflix Subscription",
             description: "My monthly subscription to Netflix for August",
-            amount: 7.99,
+            $amount: 7.99,
             date: Date.now(),
             isForeseen: false,
             originAccount: {$ref: "#/definitions/BankAccount"},
