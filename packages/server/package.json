@@ -10,10 +10,13 @@
     "express-validator": "^6.14.0",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.2.11",
-    "nodemon": "^2.0.15"
+    "nodemon": "^2.0.15",
+    "swagger-autogen": "^2.21.0",
+    "swagger-ui-express": "^4.3.0"
   },
   "scripts": {
     "nodemon": "nodemon index.js",
-    "start": "node index.js"
+    "start": "node index.js",
+    "swagger-autogen": "node swagger.js"
   }
 }

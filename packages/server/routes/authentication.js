@@ -15,6 +15,8 @@ router.post(
         body("password", "Provide a Valid Password").notEmpty()
     ]),
     async (req, res) => {
+        // #swagger.description = 'Sign Up to create a new user'
+        // #swagger.tags = ['Auth']
         const {firstName, lastName, username, password} = req.body;
         const user = new User({
             firstName: firstName,
@@ -25,7 +27,7 @@ router.post(
         user.save(async function (err, result) {
             if (err) {
                 if (err.name === "MongoServerError" && err.code === 11000)
-                    return res.status(422).send({
+                    return res.status(422).send({ // #swagger.responses[422] = { description: 'Duplicated Username' }
                         message: "Username already exist!",
                         error: {name: err.name, message: err.message, code: err.code}
                     },);
@@ -34,9 +36,9 @@ router.post(
                     .json({
                         message: "Can't create user!",
                         error: {name: err.name, message: err.message, code: err.code}
-                    });
+                    }); // #swagger.responses[500] = { description: 'Error on Insert' }
             } else {
-                return res.json(result)
+                return res.json(result) // #swagger.responses[200] = { description: 'User created Successfully' }
             }
         });
     }
