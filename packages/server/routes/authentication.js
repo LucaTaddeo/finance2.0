@@ -2,6 +2,7 @@ const express = require("express");
 const validate = require("../middlewares/validate");
 const {body} = require("express-validator");
 const bcrypt = require("bcryptjs");
+const jwt = require('jsonwebtoken');
 const User = require("../model/User");
 
 const router = express.Router();
@@ -41,6 +42,35 @@ router.post(
                 return res.json(result) // #swagger.responses[200] = { description: 'User created Successfully' }
             }
         });
+    }
+);
+
+router.post(
+    "/login",
+    validate([
+        body("username", "Provide a Valid Username").notEmpty(),
+        body("password", "Provide a Valid Password").notEmpty()
+    ]),
+    async (req, res) => {
+        // #swagger.description = 'Login and Get JWT token'
+        // #swagger.tags = ['Auth']
+        const {username, password} = req.body;
+
+        const user = await User.findOne({username: username});
+
+        if (!user)
+            return res.status(401).json({
+                message: "User not found!",
+            });
+
+        const isMatch = bcrypt.compareSync(password, user.password);
+
+        if (!isMatch)
+            return res.status(401).json({
+                message: "Wrong Password!",
+            }); // #swagger.responses[401] = { description: 'User not Found or Wrong Password' }
+        const accessToken = jwt.sign({username: user.username, id: user._id}, process.env.JWT_SECRET, { expiresIn: '10m' });
+        return res.json({token: accessToken}) // #swagger.responses[200] = { description: 'Returns the JWT Token' }
     }
 );
 

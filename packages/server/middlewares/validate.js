@@ -11,7 +11,7 @@ const validate = (validations) => {
 
         if (errors.isEmpty()) return next();
 
-        // #swagger.responses[400] = { description: 'A parameter failed validation' }
+        // #swagger.responses[400] = { description: 'A Parameter failed Validation' }
         return res.status(400).json({validationErrors: errors.array()});
     };
 };
