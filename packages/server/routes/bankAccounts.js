@@ -6,6 +6,7 @@ const BankAccountTypes = require("../helpers/BankAccountTypes");
 const BankAccount = require("../model/BankAccount");
 const User = require("../model/User");
 const isObjectId = require("../middlewares/isObjectId");
+const checkBankAccountExistanceAndOwnership = require("../helpers/checkBankAccountExistanceAndOwnership");
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.post(
     ]),
     async (req, res) => {
         // #swagger.description = 'Create a new Bank Account'
-        // #swagger.tags = ['BankAccount']
+        // #swagger.tags = ['BankAccounts']
         const {name, description, balance, accountType} = req.body;
 
         const user = await User.findById(req.user.id)
@@ -88,7 +89,7 @@ router.patch("/",
     ]),
     async (req, res) => {
         // #swagger.description = 'Modify the Details of a Bank Account'
-        // #swagger.tags = ['BankAccount']
+        // #swagger.tags = ['BankAccounts']
         const {id, name, description, accountType} = req.body;
 
         const user = await User.findById(req.user.id)
@@ -106,12 +107,8 @@ router.patch("/",
 
         const bankAccount = await BankAccount.findById(id);
 
-        if (!bankAccount) return res.status(404).json({message: "Bank Account not found"});
-        // #swagger.responses[404] = { description: 'User or Bank Account not Found' }
-
-        if (!user.bankAccounts?.map(bankAccount => bankAccount._id.valueOf()).includes(bankAccount._id.valueOf()))
-            return res.status(403).json({message: "User can't modify this Bank Account!"});
-        // #swagger.responses[403] = { description: 'User doesn't own the Bank Account' }
+        const bankAccountErrors = checkBankAccountExistanceAndOwnership(bankAccount, user, res);
+        if (bankAccountErrors) return bankAccountErrors;
 
         name && (bankAccount.name = name);
         description && (bankAccount.description = description);
@@ -138,6 +135,57 @@ router.patch("/",
         } else {
             return res.sendStatus(304); // #swagger.responses[304] = { description: 'Nothing Changed' }
         }
-    })
+    }
+);
+
+router.delete("/",
+    authenticate,
+    validate(body("id", "Provide a valid Bank Account ID").notEmpty().custom(isObjectId)),
+    async (req, res) => {
+        // #swagger.description = 'Delete a Bank Account'
+        // #swagger.tags = ['BankAccounts']
+        const {id} = req.body;
+
+        const user = await User.findById(req.user.id).select("-password");
+
+        if (!user) return res.status(404).json({message: "User not found"});
+
+        const bankAccount = await BankAccount.findById(id);
+
+        const bankAccountErrors = checkBankAccountExistanceAndOwnership(bankAccount, user, res);
+        if (bankAccountErrors) return bankAccountErrors;
+
+        BankAccount.findByIdAndDelete(bankAccount._id)
+            .then(bankAccountResult => {
+                User.updateOne({_id: user._id}, {$pull: {bankAccounts: bankAccount._id}})
+                    .then(userResult => {
+                        return res
+                            .status(200)
+                            .json({
+                                message: "Bank Account removed",
+                                bankAccount: bankAccountResult,
+                                user: userResult
+                            }) // #swagger.responses[200] = { description: 'Return the deleted Bank Account', schema: { $ref: '#/definitions/BankAccount' } }
+                    })
+                    .catch(err => {
+                        return res
+                            .status(500)
+                            .json({
+                                message: "Can't update User!",
+                                error: {name: err.name, message: err.message, code: err.code}
+                            });
+                    });
+            })
+            .catch(err => {
+                return res
+                    .status(500)
+                    .json({
+                        message: "Can't delete bankAccount!",
+                        error: {name: err.name, message: err.message, code: err.code}
+                    }); // #swagger.responses[500] = { description: 'Could not delete Account or update User' }
+            });
+
+    }
+);
 
 module.exports = router;
