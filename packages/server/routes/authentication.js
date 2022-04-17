@@ -69,7 +69,7 @@ router.post(
             return res.status(401).json({
                 message: "Wrong Password!",
             }); // #swagger.responses[401] = { description: 'User not Found or Wrong Password' }
-        const accessToken = jwt.sign({username: user.username, id: user._id}, process.env.JWT_SECRET, { expiresIn: '10m' });
+        const accessToken = jwt.sign({username: user.username, id: user._id}, process.env.JWT_SECRET, { expiresIn: '1y' });
         return res.json({token: accessToken}) // #swagger.responses[200] = { description: 'Returns the JWT Token' }
     }
 );
