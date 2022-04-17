@@ -1,5 +1,5 @@
 const express = require("express");
-const {body} = require("express-validator");
+const {body, check} = require("express-validator");
 const authenticate = require("../middlewares/auth");
 const validate = require("../middlewares/validate");
 const BankAccountTypes = require("../helpers/BankAccountTypes");
@@ -79,7 +79,8 @@ router.post(
     }
 );
 
-router.patch("/",
+router.patch(
+    "/",
     authenticate,
     validate([
         body("id", "Provide a valid Bank Account ID").notEmpty().custom(isObjectId),
@@ -138,7 +139,8 @@ router.patch("/",
     }
 );
 
-router.delete("/",
+router.delete(
+    "/",
     authenticate,
     validate(body("id", "Provide a valid Bank Account ID").notEmpty().custom(isObjectId)),
     async (req, res) => {
@@ -187,5 +189,26 @@ router.delete("/",
 
     }
 );
+
+router.get(
+    "/:id",
+    authenticate,
+    validate(check("id", "Provide a valid Bank Account ID").notEmpty().custom(isObjectId)),
+    async (req, res) => {
+        // #swagger.description = 'Get a Bank Account from its ID'
+        // #swagger.tags = ['BankAccounts']
+        const {id} = req.params;
+
+        const user = await User.findById(req.user.id).select("-password");
+
+        if (!user) return res.status(404).json({message: "User not found"});
+
+        const bankAccount = await BankAccount.findById(id);
+
+        const bankAccountErrors = checkBankAccountExistanceAndOwnership(bankAccount, user, res);
+        if (bankAccountErrors) return bankAccountErrors;
+        else return res.send({bankAccount: bankAccount});
+    }
+)
 
 module.exports = router;
