@@ -207,7 +207,7 @@ router.get(
 
         const bankAccountErrors = checkBankAccountExistanceAndOwnership(bankAccount, user, res);
         if (bankAccountErrors) return bankAccountErrors;
-        else return res.send({bankAccount: bankAccount});
+        else return res.send({bankAccount: bankAccount}); // #swagger.responses[200] = { description: 'Return the Bank Account', schema: { $ref: '#/definitions/BankAccount' } }
     }
 )
 

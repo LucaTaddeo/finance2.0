@@ -37,7 +37,7 @@ const transactions = require("./routes/transactions");
 
 app.use(apiRoot + "/health", health)
 app.use(apiRoot + "/auth", authentication)
-app.use(apiRoot + "/users", users)
+app.use(apiRoot + "/user", users)
 app.use(apiRoot + "/bankAccounts", bankAccounts)
 app.use(apiRoot + "/transactions", transactions)
 
