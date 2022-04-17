@@ -20,9 +20,9 @@ router.get("/balance", authenticate, async (req, res) => {
     if (!user) return res.status(404).json({message: "User Not Found"});
     let balance = 0;
     for(const account of user.bankAccounts){
-        const account = await BankAccount.findById(account);
-        if (!account) return res.status(404).json({message: "Bank Account Not Found"})
-        else balance += account.balance;
+        const bankAccount = await BankAccount.findById(account);
+        if (!bankAccount) return res.status(404).json({message: "Bank Account Not Found"})
+        else balance += bankAccount.balance;
         // #swagger.responses[404] = { description: 'User or Bank Account not Found' }
     }
     return res.json({balance: balance}); // #swagger.responses[200] = { description: 'Returns the Balance of the User', type: 'Number'}
@@ -35,9 +35,9 @@ router.get("/foreseenBalance", authenticate, async (req, res) => {
     if (!user) return res.status(404).json({message: "User Not Found"});
     let foreseenBalance = 0;
     for(const account of user.bankAccounts){
-        const account = await BankAccount.findById(account);
-        if (!account) return res.status(404).json({message: "Bank Account Not Found"})
-        else foreseenBalance += account.foreseenBalance;
+        const bankAccount = await BankAccount.findById(account);
+        if (!bankAccount) return res.status(404).json({message: "Bank Account Not Found"})
+        else foreseenBalance += bankAccount.foreseenBalance;
         // #swagger.responses[404] = { description: 'User or Bank Account not Found' }
     }
     return res.json({foreseenBalance: foreseenBalance}); // #swagger.responses[200] = { description: 'Returns the Foreseen Balance of the User', type: 'Number'}
