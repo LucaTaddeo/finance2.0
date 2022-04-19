@@ -24,7 +24,7 @@ jobs:
             📜 ${{ github.event.commits[0].message }}
 
             👤 ${{ github.actor }}
-
+            Run Id:  ${{github.run_id}}
             See changes: https://github.com/${{ github.repository }}/commit/${{github.sha}}
   Deploy:
     #needs: [ Notify ]
@@ -51,6 +51,11 @@ jobs:
           url: https://lucas-finance.herokuapp.com/api/v1/health
           max-attempts: 3
           retry-delay: 5s
+      - name: Get Workflow informations
+        run: |
+          curl -u ${{ secrets.GH_USERNAME }}:${{ secrets.GH_ACCESS_TOKEN }} \                                                                                                          ─╯
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/LucaTaddeo/finance2.0/actions/runs/${{github.run_id}} | jq '{updated_at},  {created_at}'
       - name: Notify Success on Telegram
         uses: appleboy/telegram-action@master
         with:
