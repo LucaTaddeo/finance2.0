@@ -21,7 +21,8 @@
     "build": "yarn workspace web run build",
     "dev": "yarn server & yarn web",
     "heroku-postbuild": "yarn build",
-    "docs": "yarn workspace server run generate-docs"
+    "docs": "yarn workspace server run generate-docs",
+    "deploy": "git push heroku main"
   },
   "devDependencies": {},
   "dependencies": {
