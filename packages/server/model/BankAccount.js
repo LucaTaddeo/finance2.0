@@ -19,7 +19,7 @@ const BankAccountSchema = mongoose.Schema(
             required: true,
             default: 0
         },
-        transactions: [Transaction],
+        transactions: [Transaction], //TODO: embedding transactions will result in too big arrays! better to reference ids!
         accountType: {
             type: String,
             enum: BankAccountTypes,

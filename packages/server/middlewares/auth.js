@@ -9,6 +9,7 @@ const authenticate = function (req, res, next) {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        // TODO: add MongoDB findById for user here and pass user document in req? 404 if not found
         req.user = {username: decoded.username, id: decoded.id};
         req.token = {token: token, iat: decoded.iat, exp: decoded.exp}
         next();
