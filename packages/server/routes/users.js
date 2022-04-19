@@ -19,7 +19,7 @@ router.get("/balance", authenticate, async (req, res) => {
     const user = await User.findById(req.user.id).select("-password");
     if (!user) return res.status(404).json({message: "User Not Found"});
     let balance = 0;
-    for(const account of user.bankAccounts){
+    for (const account of user.bankAccounts) {
         const bankAccount = await BankAccount.findById(account);
         if (!bankAccount) return res.status(404).json({message: "Bank Account Not Found"})
         else balance += bankAccount.balance;
@@ -34,13 +34,27 @@ router.get("/foreseenBalance", authenticate, async (req, res) => {
     const user = await User.findById(req.user.id).select("-password");
     if (!user) return res.status(404).json({message: "User Not Found"});
     let foreseenBalance = 0;
-    for(const account of user.bankAccounts){
+    for (const account of user.bankAccounts) {
         const bankAccount = await BankAccount.findById(account);
         if (!bankAccount) return res.status(404).json({message: "Bank Account Not Found"})
         else foreseenBalance += bankAccount.foreseenBalance;
         // #swagger.responses[404] = { description: 'User or Bank Account not Found' }
     }
     return res.json({foreseenBalance: foreseenBalance}); // #swagger.responses[200] = { description: 'Returns the Foreseen Balance of the User', type: 'Number'}
-})
+});
+
+router.get("/bankAccounts", authenticate, async (req, res) => {
+    // #swagger.description = 'Get the Bank Accounts of the current User'
+    // #swagger.tags = ['Users']
+    const user = await User.findById(req.user.id).select("-password").populate({
+        path: "bankAccounts",
+        select: "-transactions"
+    });
+    if (!user) return res.status(404).json({message: "User Not Found"});
+    // #swagger.responses[404] = { description: 'User not Found' }
+
+    return res.json({bankAccounts: user?.bankAccounts});
+    // #swagger.responses[500] = { description: 'Returns an array of Bank Accounts', schema: { $ref: '#/definitions/BankAccount' } }
+});
 
 module.exports = router;
