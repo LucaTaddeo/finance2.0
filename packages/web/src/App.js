@@ -3,14 +3,14 @@ import React from "react";
 const App = () => {
     const [data, setData] = React.useState(null);
     React.useEffect(() => {
-        fetch("/api")
+        fetch("/api/v1/health")
             .then((res) => res.json())
             .then((data) => setData(data.message));
     }, []);
     return (
         <div>
             <header>
-                TEST HERE {data}
+                WebApp under construction {data}
             </header>
         </div>
     );
