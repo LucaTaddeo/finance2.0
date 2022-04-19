@@ -20,7 +20,7 @@ try {
         },
         (err) => {
             if(err) console.log(err)
-            else console.log("MongoDB is connected");
+            else console.log("MongoDB connected!");
         }
     );
 } catch (e) {

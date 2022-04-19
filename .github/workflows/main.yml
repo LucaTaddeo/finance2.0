@@ -51,9 +51,9 @@ jobs:
           url: https://lucas-finance.herokuapp.com/api/v1/health
           max-attempts: 3
           retry-delay: 5s
-      - name: Get Workflow informations
+      - name: Get Workflow Duration using curl
         run: |
-          curl -u ${{ secrets.GH_USERNAME }}:${{ secrets.GH_ACCESS_TOKEN }} -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/LucaTaddeo/finance2.0/actions/runs/${{github.run_id}} | jq '{updated_at},  {created_at}'
+          curl -u ${{ secrets.GH_USERNAME }}:${{ secrets.GH_ACCESS_TOKEN }} -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/LucaTaddeo/finance2.0/actions/runs/${{github.run_id}} | tee >(jq '.updated_at') >(jq '.created_at') >/dev/null
       - name: Notify Success on Telegram
         uses: appleboy/telegram-action@master
         with:
