@@ -4,6 +4,7 @@ const validate = require("../middlewares/validate");
 const {body} = require("express-validator");
 const User = require("../model/User");
 const BankAccount = require("../model/BankAccount");
+const Transaction = require("../model/Transaction");
 const isObjectId = require("../middlewares/isObjectId");
 const checkBankAccountExistanceAndOwnership = require("../helpers/checkBankAccountExistanceAndOwnership");
 
@@ -34,34 +35,44 @@ router.post(
         const bankAccountErrors = checkBankAccountExistanceAndOwnership(bankAccount, user, res);
         if (bankAccountErrors) return bankAccountErrors;
 
-        const transaction = {
+        const transaction = new Transaction({
             title: title,
             amount: amount
-        };
+        });
 
         isForeseen && (transaction.isForeseen = isForeseen);
         description && (transaction.description = description);
         date ? (transaction.date = date) : (transaction.date = new Date());
 
-        bankAccount.transactions.push(transaction);
-
-        bankAccount.foreseenBalance += transaction.amount;
-        if (!transaction.isForeseen) bankAccount.balance += transaction.amount;
-
-        bankAccount.save()
-            .then(result => {
-                return res.status(200).json({
-                    bankAccount: result
-                })
-            }) // #swagger.responses[200] = { description: 'New Transaction created successfully' }
+        transaction.save()
+            .then(transactionResult => {
+                bankAccount.transactions.push(transactionResult._id);
+                bankAccount.foreseenBalance += transactionResult.amount;
+                if (!transactionResult.isForeseen) bankAccount.balance += transactionResult.amount;
+                bankAccount.save()
+                    .then(bankAccountResult => {
+                        return res.status(201).json({
+                            bankAccount: bankAccountResult,
+                            transaction: transactionResult
+                        }); // #swagger.responses[201] = { description: 'New Transaction created successfully' }
+                    })
+                    .catch(err => {
+                        return res
+                            .status(500)
+                            .json({
+                                message: "Can't update Bank Account!",
+                                error: {name: err.name, message: err.message, code: err.code}
+                            });
+                    });
+            })
             .catch(err => {
                 return res
                     .status(500)
                     .json({
-                        message: "Can't create transaction!",
+                        message: "Can't create Transaction!",
                         error: {name: err.name, message: err.message, code: err.code}
-                    }); // #swagger.responses[500] = { description: 'Could not create new Transaction' }
-            })
+                    }); // #swagger.responses[500] = { description: 'Could not create new Transaction or update Bank Account' }
+            });
     }
 );
 
