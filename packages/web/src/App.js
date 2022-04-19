@@ -5,12 +5,12 @@ const App = () => {
     React.useEffect(() => {
         fetch("/api/v1/health")
             .then((res) => res.json())
-            .then((data) => setData(data));
+            .then((data) => setData(data.uptime));
     }, []);
     return (
         <div>
             <header>
-                WebApp under construction {data}
+                WebApp under construction [Uptime: {data}]
             </header>
         </div>
     );
