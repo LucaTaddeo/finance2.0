@@ -1,7 +1,7 @@
 const express = require("express");
 const authenticate = require("../middlewares/auth");
 const validate = require("../middlewares/validate");
-const {body} = require("express-validator");
+const {body, check} = require("express-validator");
 const User = require("../model/User");
 const BankAccount = require("../model/BankAccount");
 const Transaction = require("../model/Transaction");
@@ -192,7 +192,7 @@ router.post(
 
         const transaction = new Transaction({
             title: title,
-            amount: 0,
+            amount: amount,
             accountsDetails: [
                 {
                     account: fromBankAccount._id,
@@ -236,7 +236,31 @@ router.post(
                     }); // #swagger.responses[500] = { description: 'Could not create new Transaction or update Bank Account' }
             });
     }
-)
-;
+);
+
+router.get(
+    "/:id",
+    authenticate,
+    validate(check("id", "Provide a valid Transaction ID").notEmpty().custom(isObjectId)),
+    async (req, res) => {
+        // #swagger.description = 'Get a Transaction from its ID'
+        // #swagger.tags = ['Transactions']
+        const {id} = req.params;
+
+        const user = await User.findById(req.user.id).select("-password");
+
+        if (!user) return res.status(404).json({message: "User not found"});
+
+        const transaction = await Transaction.findById(id).populate({path: "accountsDetails.account"});
+
+        for (const accountDetail of transaction.accountsDetails){
+            const bankAccount = await BankAccount.findById(accountDetail.account._id);
+            const bankAccountErrors = checkBankAccountExistanceAndOwnership(bankAccount, user, res);
+            if (bankAccountErrors) return res.status(403).json({message: "User can't retrieve this Transaction!"});
+            // #swagger.responses[403] = { description: 'User does not own the Transaction'}
+        }
+        return res.send({transaction: transaction}); // #swagger.responses[200] = { description: 'Return the Transaction', schema: { $ref: '#/definitions/Transaction' } }
+    }
+);
 
 module.exports = router;
