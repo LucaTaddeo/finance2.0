@@ -17,7 +17,7 @@ const TransactionSchema = mongoose.Schema(
         },
         isForeseen: Boolean,
         isTransfer: Boolean,
-        isSplitTransaction: Boolean,
+        isSplit: Boolean,
         accountsDetails: [
             {
                 _id: false,

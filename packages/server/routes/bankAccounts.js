@@ -209,6 +209,27 @@ router.get(
         if (bankAccountErrors) return bankAccountErrors;
         else return res.send({bankAccount: bankAccount}); // #swagger.responses[200] = { description: 'Return the Bank Account', schema: { $ref: '#/definitions/BankAccount' } }
     }
+);
+
+router.get(
+    "/:id/transactions",
+    authenticate,
+    validate(check("id", "Provide a valid Bank Account ID").notEmpty().custom(isObjectId)),
+    async (req, res) => {
+        // #swagger.description = 'Get a Bank Account from its ID'
+        // #swagger.tags = ['BankAccounts']
+        const {id} = req.params;
+
+        const user = await User.findById(req.user.id).select("-password");
+
+        if (!user) return res.status(404).json({message: "User not found"});
+
+        const bankAccount = await BankAccount.findById(id).populate("transactions");
+
+        const bankAccountErrors = checkBankAccountExistanceAndOwnership(bankAccount, user, res);
+        if (bankAccountErrors) return bankAccountErrors;
+        else return res.send({transactions: bankAccount.transactions}); // #swagger.responses[200] = { description: 'Return the Bank Account', schema: { $ref: '#/definitions/BankAccount' } }
+    }
 )
 
 module.exports = router;
