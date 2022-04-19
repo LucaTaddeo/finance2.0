@@ -4,9 +4,6 @@ const User = require("../model/User");
 const BankAccount = require("../model/BankAccount");
 const validate = require("../middlewares/validate");
 const {body} = require("express-validator");
-const isObjectId = require("../middlewares/isObjectId");
-const BankAccountTypes = require("../helpers/BankAccountTypes");
-const checkBankAccountExistanceAndOwnership = require("../helpers/checkBankAccountExistanceAndOwnership");
 const bcrypt = require("bcryptjs");
 
 const router = express.Router();
