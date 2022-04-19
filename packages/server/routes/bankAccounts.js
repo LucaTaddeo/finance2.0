@@ -224,12 +224,15 @@ router.get(
 
         if (!user) return res.status(404).json({message: "User not found"});
 
-        const bankAccount = await BankAccount.findById(id).populate("transactions");
+        const bankAccount = await BankAccount.findById(id).populate({
+            path: "transactions",
+            options: {sort: {'date': -1}}
+        });
 
         const bankAccountErrors = checkBankAccountExistanceAndOwnership(bankAccount, user, res);
         if (bankAccountErrors) return bankAccountErrors;
         else return res.send({transactions: bankAccount.transactions}); // #swagger.responses[200] = { description: 'Return the Bank Account', schema: { $ref: '#/definitions/BankAccount' } }
     }
-)
+);
 
 module.exports = router;
