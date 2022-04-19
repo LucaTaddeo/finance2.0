@@ -19,10 +19,10 @@ router.post(
         body("isForeseen", "Provide a boolean value for \"isForeseen\"").optional().isBoolean(),
         body("description", "Provide a valid Description").optional().notEmpty().isString(),
         body("date", "Provide a valid Date").optional().notEmpty().isDate(),
-        body("bankAccountId", "Provide a valid Bank Account ID").notEmpty().custom(isObjectId),
+        body("bankAccountId", "Provide a valid Bank Account ID").notEmpty().custom(isObjectId)
     ]),
     async (req, res) => {
-        // #swagger.description = 'Create a new Transaction'
+        // #swagger.description = 'Create a new Standard Transaction'
         // #swagger.tags = ['Transactions']
         const {title, amount, isForeseen, description, date, bankAccountId} = req.body;
 
@@ -37,7 +37,8 @@ router.post(
 
         const transaction = new Transaction({
             title: title,
-            amount: amount
+            amount: amount,
+            accountsDetails: [{account: bankAccount._id, amount: amount}]
         });
 
         isForeseen && (transaction.isForeseen = isForeseen);
@@ -75,5 +76,6 @@ router.post(
             });
     }
 );
+
 
 module.exports = router;

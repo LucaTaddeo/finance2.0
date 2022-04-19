@@ -16,20 +16,17 @@ const TransactionSchema = mongoose.Schema(
             default: Date.now
         },
         isForeseen: Boolean,
-        originAccount: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "bankAccount",
-        },
-        destinationAccount: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "bankAccount",
-        },
-        splitTransactionDetails: [
+        isTransfer: Boolean,
+        isSplitTransaction: Boolean,
+        accountsDetails: [
             {
+                _id: false,
                 account: {
                     type: mongoose.Schema.Types.ObjectId,
                     ref: "bankAccount",
                     required: true,
+                    index: true,
+                    unique: false
                 },
                 amount: {
                     type: Number,
