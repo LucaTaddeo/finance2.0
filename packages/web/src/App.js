@@ -5,7 +5,7 @@ const App = () => {
     React.useEffect(() => {
         fetch("/api/v1/health")
             .then((res) => res.json())
-            .then((data) => setData(data.message));
+            .then((data) => setData(data));
     }, []);
     return (
         <div>
