@@ -54,7 +54,7 @@ jobs:
       - name: Notify Success on Telegram
         uses: appleboy/telegram-action@master
         with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          to: ${{ secrets.TELEGRAM_NOTIFY_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_NOTIFY_TOKEN }}
           message: |
             ✅ finance2.0 successfully deployed!
