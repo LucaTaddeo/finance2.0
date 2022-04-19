@@ -108,7 +108,7 @@ router.post(
 
         const accountsDetails = [];
 
-        for (const splitTransactionDetail of splitTransactionDetails){
+        for (const splitTransactionDetail of splitTransactionDetails) {
             const bankAccount = await BankAccount.findById(splitTransactionDetail.bankAccountId);
             const bankAccountErrors = checkBankAccountExistanceAndOwnership(bankAccount, user, res);
             if (bankAccountErrors) return bankAccountErrors;
@@ -160,5 +160,83 @@ router.post(
             });
     }
 );
+
+router.post(
+    "/transfer",
+    authenticate,
+    validate([
+        body("title", "Provide a valid Transaction Title").notEmpty().isString(),
+        body("amount", "Provide a valid amount").notEmpty().isNumeric(),
+        body("isForeseen", "Provide a boolean value for \"isForeseen\"").optional().isBoolean(),
+        body("description", "Provide a valid Description").optional().notEmpty().isString(),
+        body("date", "Provide a valid Date").optional().notEmpty().isDate(),
+        body("fromBankAccountId", "Provide a valid Bank Account ID").notEmpty().custom(isObjectId),
+        body("toBankAccountId", "Provide a valid Bank Account ID").notEmpty().custom(isObjectId)
+    ]),
+    async (req, res) => {
+        // #swagger.description = 'Create a new Transfer'
+        // #swagger.tags = ['Transactions']
+        const {title, amount, isForeseen, description, date, fromBankAccountId, toBankAccountId} = req.body;
+
+        const user = await User.findById(req.user.id);
+
+        if (!user) return res.status(404).json({message: "User not found"});
+
+        const fromBankAccount = await BankAccount.findById(fromBankAccountId);
+        const fromBankAccountErrors = checkBankAccountExistanceAndOwnership(fromBankAccount, user, res);
+        if (fromBankAccountErrors) return fromBankAccountErrors;
+
+        const toBankAccount = await BankAccount.findById(toBankAccountId);
+        const toBankAccountErrors = checkBankAccountExistanceAndOwnership(toBankAccount, user, res);
+        if (toBankAccountErrors) return toBankAccountErrors;
+
+        const transaction = new Transaction({
+            title: title,
+            amount: 0,
+            accountsDetails: [
+                {
+                    account: fromBankAccount._id,
+                    amount: Math.abs(parseFloat(amount)) * -1
+                },
+                {
+                    account: toBankAccount._id,
+                    amount: amount
+                }
+            ],
+            isTransfer: true
+        });
+
+        isForeseen && (transaction.isForeseen = isForeseen);
+        description && (transaction.description = description);
+        date ? (transaction.date = date) : (transaction.date = new Date());
+
+        transaction.save()
+            .then(async transactionResult => {
+                fromBankAccount.transactions.push(transactionResult._id);
+                fromBankAccount.foreseenBalance -= parseFloat(amount);
+                if (!transactionResult.isForeseen) fromBankAccount.balance -= parseFloat(amount);
+                const fromBankAccountRes = await fromBankAccount.save();
+
+                toBankAccount.transactions.push(transactionResult._id);
+                toBankAccount.foreseenBalance += parseFloat(amount);
+                if (!transactionResult.isForeseen) toBankAccount.balance += parseFloat(amount);
+                const toBankAccountRes = await toBankAccount.save();
+                return res.status(201).json({
+                    fromBankAccount: fromBankAccountRes,
+                    toBankAccount: toBankAccountRes,
+                    transaction: transactionResult
+                }); // #swagger.responses[201] = { description: 'New Transaction created successfully' }
+            })
+            .catch(err => {
+                return res
+                    .status(500)
+                    .json({
+                        message: "Can't create Transaction!",
+                        error: {name: err.name, message: err.message, code: err.code}
+                    }); // #swagger.responses[500] = { description: 'Could not create new Transaction or update Bank Account' }
+            });
+    }
+)
+;
 
 module.exports = router;
