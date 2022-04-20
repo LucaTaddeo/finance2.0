@@ -1,13 +1,60 @@
 const express = require("express");
 const authenticate = require("../middlewares/auth");
 const validate = require("../middlewares/validate");
-const {body, check} = require("express-validator");
+const {body, check, oneOf} = require("express-validator");
 const BankAccount = require("../model/BankAccount");
 const Transaction = require("../model/Transaction");
 const isObjectId = require("../middlewares/isObjectId");
 const checkBankAccountExistanceAndOwnership = require("../helpers/checkBankAccountExistanceAndOwnership");
 
 const router = express.Router();
+
+function updateBankAccountForStandardTransaction(bankAccount, transactionResult) {
+    bankAccount.transactions.push(transactionResult._id);
+    bankAccount.foreseenBalance += parseFloat(transactionResult.amount);
+    if (!transactionResult.isForeseen) bankAccount.balance += parseFloat(transactionResult.amount);
+    return bankAccount.save()
+}
+
+async function updateBankAccountsForTransfer(fromBankAccount, transactionResult, amount, toBankAccount) {
+    fromBankAccount.transactions.push(transactionResult._id);
+    fromBankAccount.foreseenBalance -= parseFloat(amount);
+    if (!transactionResult.isForeseen) fromBankAccount.balance -= parseFloat(amount);
+    const fromBankAccountRes = await fromBankAccount.save();
+
+    toBankAccount.transactions.push(transactionResult._id);
+    toBankAccount.foreseenBalance += parseFloat(amount);
+    if (!transactionResult.isForeseen) toBankAccount.balance += parseFloat(amount);
+    const toBankAccountRes = await toBankAccount.save();
+    return ({
+        fromBankAccountRes: fromBankAccountRes,
+        toBankAccountRes: toBankAccountRes,
+        transaction: transactionResult
+    })
+}
+
+function updateBankAccountsForSplitTransaction(splitTransactionDetails, transactionResult) {
+    return Promise.all(splitTransactionDetails.map(splitTransactionDetail => {
+        splitTransactionDetail.bankAccount.transactions.push(transactionResult._id);
+        splitTransactionDetail.bankAccount.foreseenBalance += parseFloat(splitTransactionDetail.amount);
+        if (!transactionResult.isForeseen) splitTransactionDetail.bankAccount.balance += parseFloat(splitTransactionDetail.amount);
+        return splitTransactionDetail.bankAccount.save()
+    }));
+}
+
+function removeTransactionFromBankAccounts(transaction) {
+    return Promise.all(transaction.accountsDetails.map(accountDetail => {
+        return BankAccount.findOneAndUpdate(
+            {_id: accountDetail.account},
+            {
+                $pull: {transactions: transaction._id},
+                $inc: {
+                    foreseenBalance: parseFloat(accountDetail.amount) * -1,
+                    balance: transaction.isForeseen ? 0 : parseFloat(accountDetail.amount) * -1
+                },
+            })
+    }));
+}
 
 router.post(
     "/",
@@ -44,10 +91,7 @@ router.post(
 
         transaction.save()
             .then(transactionResult => {
-                bankAccount.transactions.push(transactionResult._id);
-                bankAccount.foreseenBalance += parseFloat(transactionResult.amount);
-                if (!transactionResult.isForeseen) bankAccount.balance += parseFloat(transactionResult.amount);
-                bankAccount.save()
+                updateBankAccountForStandardTransaction(bankAccount, transactionResult)
                     .then(bankAccountResult => {
                         return res.status(201).json({
                             bankAccount: bankAccountResult,
@@ -124,12 +168,7 @@ router.post(
 
         transaction.save()
             .then(transactionResult => {
-                Promise.all(splitTransactionDetails.map(splitTransactionDetail => {
-                    splitTransactionDetail.bankAccount.transactions.push(transactionResult._id);
-                    splitTransactionDetail.bankAccount.foreseenBalance += parseFloat(splitTransactionDetail.amount);
-                    if (!transactionResult.isForeseen) splitTransactionDetail.bankAccount.balance += parseFloat(splitTransactionDetail.amount);
-                    return splitTransactionDetail.bankAccount.save()
-                }))
+                updateBankAccountsForSplitTransaction(splitTransactionDetails, transactionResult)
                     .then(bankAccountsResults => {
                         return res.status(201).json({
                             bankAccounts: bankAccountsResults,
@@ -205,20 +244,8 @@ router.post(
 
         transaction.save()
             .then(async transactionResult => {
-                fromBankAccount.transactions.push(transactionResult._id);
-                fromBankAccount.foreseenBalance -= parseFloat(amount);
-                if (!transactionResult.isForeseen) fromBankAccount.balance -= parseFloat(amount);
-                const fromBankAccountRes = await fromBankAccount.save();
-
-                toBankAccount.transactions.push(transactionResult._id);
-                toBankAccount.foreseenBalance += parseFloat(amount);
-                if (!transactionResult.isForeseen) toBankAccount.balance += parseFloat(amount);
-                const toBankAccountRes = await toBankAccount.save();
-                return res.status(201).json({
-                    fromBankAccount: fromBankAccountRes,
-                    toBankAccount: toBankAccountRes,
-                    transaction: transactionResult
-                }); // #swagger.responses[201] = { description: 'New Transaction created successfully' }
+                const resultOfUpdate = await updateBankAccountsForTransfer(fromBankAccount, transactionResult, amount, toBankAccount);
+                return res.status(201).json(resultOfUpdate); // #swagger.responses[201] = { description: 'New Transaction created successfully' }
             })
             .catch(err => {
                 return res
@@ -277,17 +304,7 @@ router.delete(
 
         Transaction.findByIdAndDelete(id)
             .then(deletionResult => {
-                Promise.all(transaction.accountsDetails.map(accountDetail => {
-                    return BankAccount.findOneAndUpdate(
-                        {_id: accountDetail.account},
-                        {
-                            $pull: {transactions: transaction._id},
-                            $inc: {
-                                foreseenBalance: parseFloat(accountDetail.amount) * -1,
-                                balance: transaction.isForeseen ? 0 : parseFloat(accountDetail.amount) * -1
-                            },
-                        })
-                }))
+                removeTransactionFromBankAccounts(transaction)
                     .then(bankAccountsResults => {
                         return res.status(200).json({
                             bankAccounts: bankAccountsResults,
@@ -313,6 +330,158 @@ router.delete(
             });
     }
 );
+
+router.patch(
+    "/",
+    authenticate,
+    validate([
+        body("id", "Provide a valid Transaction ID").notEmpty().custom(isObjectId),
+        body("title", "Provide a valid Transaction Title").optional().notEmpty().isString(),
+        body("amount", "Provide a valid amount").optional().notEmpty().isNumeric(),
+        body("isForeseen", "Provide a boolean value for \"isForeseen\"").optional().notEmpty().isBoolean(),
+        body("description", "Provide a valid Description").optional().notEmpty().isString(),
+        body("date", "Provide a valid Date").optional().notEmpty().isDate(),
+        body("bankAccountId", "Provide a valid Bank Account ID").optional().notEmpty().custom(isObjectId),
+        body(["fromBankAccountId", "toBankAccountId"], "Provide a valid Bank Account ID").optional().notEmpty().custom(isObjectId),
+        body("splitTransactionDetails", "Provide a valid array").optional().notEmpty().isArray(),
+    ]),
+    async (req, res) => {
+        // #swagger.description = 'Modify the details of a Transaction'
+        // #swagger.tags = ['Transactions']
+        // TODO: big issue to modify amounts and bankAccounts/transaction type. Probably better to have separated endpoints here
+        // NOTE: this endpoint won't work as expected yet!
+        const {
+            id,
+            title,
+            amount,
+            isForeseen,
+            description,
+            date,
+            bankAccountId,
+            fromBankAccountId,
+            toBankAccountId,
+            splitTransactionDetails
+        } = req.body;
+
+        const {user} = req.auth;
+
+        const transaction = await Transaction.findById(id);
+        if (!transaction) return res.status(404).json({message: "Transaction not Found"});
+
+        title && (transaction.title = title);
+        description && (transaction.description = description);
+        isForeseen && (transaction.isForeseen = isForeseen);
+        amount && (transaction.amount = amount);
+        date && (transaction.date = date);
+        let transactionAccountsChanged = false;
+        if (bankAccountId) {
+            // If bankAccountId is set, this will be a standard transaction
+            const bankAccount = await BankAccount.findById(bankAccountId);
+
+            const bankAccountErrors = checkBankAccountExistanceAndOwnership(bankAccount, user, res);
+            if (bankAccountErrors) return bankAccountErrors;
+
+            // Set the new accountsDetails, and remove isSplit and isTransfer if they were set
+            transaction.accountsDetails = [{account: bankAccount._id, amount: transaction.amount}]
+            transaction.isSplit && (transaction.isSplit = undefined);
+            transaction.isTransfer && (transaction.isTransfer = undefined);
+            transactionAccountsChanged = true;
+        } else if (fromBankAccountId && toBankAccountId) {
+            // If fromBankAccountId and toBankAccountId are set, this will be a transfer
+            const fromBankAccount = await BankAccount.findById(fromBankAccountId);
+            const fromBankAccountErrors = checkBankAccountExistanceAndOwnership(fromBankAccount, user, res);
+            if (fromBankAccountErrors) return fromBankAccountErrors;
+
+            const toBankAccount = await BankAccount.findById(toBankAccountId);
+            const toBankAccountErrors = checkBankAccountExistanceAndOwnership(toBankAccount, user, res);
+            if (toBankAccountErrors) return toBankAccountErrors;
+
+            transaction.accountsDetails = [
+                {
+                    account: fromBankAccount._id,
+                    amount: Math.abs(parseFloat(transaction.amount)) * -1
+                },
+                {
+                    account: toBankAccount._id,
+                    amount: transaction.amount
+                }
+            ];
+
+            transaction.isSplit && (transaction.isSplit = undefined);
+            transaction.isTransfer && (transaction.isTransfer = true);
+            transactionAccountsChanged = true;
+        } else if (splitTransactionDetails?.length > 0) {
+            const accountsDetails = [];
+
+            for (const splitTransactionDetail of splitTransactionDetails) {
+                if (!splitTransactionDetail.bankAccountId || !splitTransactionDetail.amount)
+                    return res.status(400).json({message: "Wrong format of splitTransactionDetails"})
+                const bankAccount = await BankAccount.findById(splitTransactionDetail.bankAccountId);
+                const bankAccountErrors = checkBankAccountExistanceAndOwnership(bankAccount, user, res);
+                if (bankAccountErrors) return bankAccountErrors;
+                accountsDetails.push({account: bankAccount._id, amount: splitTransactionDetail.amount});
+                splitTransactionDetail.bankAccount = bankAccount;
+            }
+            transaction.accountsDetails = accountsDetails;
+
+            transaction.isSplit && (transaction.isSplit = true);
+            transaction.isTransfer && (transaction.isTransfer = undefined);
+            transactionAccountsChanged = true;
+        }
+
+        transaction.save()
+            .then(transactionResult => {
+                if (transactionAccountsChanged) {
+                    console.log("TRANSACTION ACCOUNTS CHANGED")
+                    removeTransactionFromBankAccounts(transactionResult)
+                        .then(oldBankAccounts => {
+                            Promise.all(() => {
+                                if (transactionResult.isSplit && splitTransactionDetails?.length > 0)
+                                    return updateBankAccountsForSplitTransaction(splitTransactionDetails, transactionResult)
+                                else if (transactionResult.isTransfer && fromBankAccountId && toBankAccountId)
+                                    return updateBankAccountsForTransfer(fromBankAccountId, transactionResult, transactionResult.amount, toBankAccountId)
+                                else if (!transactionResult.isSplit && !transactionResult.isTransfer && bankAccountId)
+                                    return updateBankAccountForStandardTransaction(bankAccount, transactionResult)
+                            }).then(bankAccountsResults => {
+                                return res.status(200).json({
+                                    bankAccounts: bankAccountsResults,
+                                    oldBankAccounts: oldBankAccounts,
+                                    transaction: transactionResult
+                                });
+                            }).catch(err => {
+                                return res
+                                    .status(500)
+                                    .json({
+                                        message: "Can't update new Bank Account!",
+                                        error: {name: err.name, message: err.message, code: err.code}
+                                    });
+                            });
+                        })
+                        .catch(err => {
+                            return res
+                                .status(500)
+                                .json({
+                                    message: "Can't update old Bank Accounts!",
+                                    error: {name: err.name, message: err.message, code: err.code}
+                                });
+                        });
+                } else {
+                    console.log("TRANSACTION ACCOUNTS DID NOT CHANGE!")
+                    return res.status(200).json({
+                        transaction: transactionResult
+                    }); // #swagger.responses[200] = { description: 'Transaction details updated successfully' }
+                }
+            })
+            .catch(err => {
+                return res
+                    .status(500)
+                    .json({
+                        message: "Can't update Transaction!",
+                        error: {name: err.name, message: err.message, code: err.code}
+                    }); // #swagger.responses[500] = { description: 'Failed to update Transaction or Bank Accounts' }
+            });
+    }
+)
 
 
 module.exports = router;
