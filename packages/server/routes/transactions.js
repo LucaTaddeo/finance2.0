@@ -243,15 +243,76 @@ router.get(
         const {user} = req.auth;
 
         const transaction = await Transaction.findById(id).populate({path: "accountsDetails.account"});
+        if (!transaction) return res.status(404).json({message: "Transaction not found!"});
 
         for (const accountDetail of transaction.accountsDetails) {
             const bankAccount = await BankAccount.findById(accountDetail.account._id);
             const bankAccountErrors = checkBankAccountExistanceAndOwnership(bankAccount, user, res);
-            if (bankAccountErrors) return res.status(403).json({message: "User can't retrieve this Transaction!"});
+            if (bankAccountErrors) return res.status(403).json({message: "User can't access this Transaction!"});
             // #swagger.responses[403] = { description: 'User does not own the Transaction'}
         }
         return res.send({transaction: transaction}); // #swagger.responses[200] = { description: 'Return the Transaction', schema: { $ref: '#/definitions/Transaction' } }
     }
 );
+
+router.delete(
+    "/",
+    authenticate,
+    validate(body("id", "Provide a valid Transaction Id").notEmpty().custom(isObjectId)),
+    async (req, res) => {
+        // #swagger.description = 'Delete a Transaction from its ID'
+        // #swagger.tags = ['Transactions']
+        const {id} = req.body;
+        const {user} = req.auth;
+
+        const transaction = await Transaction.findById(id);
+        if (!transaction) return res.status(404).json({message: "Transaction not found!"});
+
+        for (const accountDetail of transaction.accountsDetails) {
+            const bankAccount = await BankAccount.findById(accountDetail.account);
+            const bankAccountErrors = checkBankAccountExistanceAndOwnership(bankAccount, user, res);
+            if (bankAccountErrors) return res.status(403).json({message: "User can't access this Transaction!"});
+            // #swagger.responses[403] = { description: 'User does not own the Transaction'}
+        }
+
+        Transaction.findByIdAndDelete(id)
+            .then(deletionResult => {
+                Promise.all(transaction.accountsDetails.map(accountDetail => {
+                    return BankAccount.findOneAndUpdate(
+                        {_id: accountDetail.account},
+                        {
+                            $pull: {transactions: transaction._id},
+                            $inc: {
+                                foreseenBalance: parseFloat(accountDetail.amount) * -1,
+                                balance: transaction.isForeseen ? 0 : parseFloat(accountDetail.amount) * -1
+                            },
+                        })
+                }))
+                    .then(bankAccountsResults => {
+                        return res.status(200).json({
+                            bankAccounts: bankAccountsResults,
+                            deletion: deletionResult
+                        }); // #swagger.responses[200] = { description: 'Transaction Deleted successfully' }
+                    })
+                    .catch(err => {
+                        return res
+                            .status(500)
+                            .json({
+                                message: "Can't update Bank Accounts!",
+                                error: {name: err.name, message: err.message, code: err.code}
+                            });
+                    });
+            })
+            .catch(err => {
+                return res
+                    .status(500)
+                    .json({
+                        message: "Can't create Transaction!",
+                        error: {name: err.name, message: err.message, code: err.code}
+                    }); // #swagger.responses[500] = { description: 'Could not delete Transaction or update Bank Accounts' }
+            });
+    }
+);
+
 
 module.exports = router;
