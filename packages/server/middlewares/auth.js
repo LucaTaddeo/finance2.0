@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
+const User = require("../model/User");
 
-const authenticate = function (req, res, next) {
+const authenticate = async function (req, res, next) {
     // #swagger.security = [{"bearerAuth": []}]
 
     const token = req.headers["x-access-token"]; // #swagger.parameters["x-access-token"] = { in: 'header', description: 'Token for JWT Authentication'}
@@ -9,9 +10,12 @@ const authenticate = function (req, res, next) {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        // TODO: add MongoDB findById for user here and pass user document in req? 404 if not found
-        req.user = {username: decoded.username, id: decoded.id};
-        req.token = {token: token, iat: decoded.iat, exp: decoded.exp}
+
+        const user = await User.findById(decoded.id).select("-password");
+
+        if (!user) return res.status(404).send({message: "User not found"});
+        else req.auth = {user: user, token: {token: token, iat: decoded.iat, exp: decoded.exp}};
+
         next();
     } catch (e) {
         if (e instanceof jwt.TokenExpiredError) {
@@ -19,6 +23,7 @@ const authenticate = function (req, res, next) {
         } else if (e instanceof jwt.JsonWebTokenError) {
             res.status(401).send({message: "Invalid Token"});
         } else {
+            console.log(e)
             res.status(500).send({message: "Authorization Error!"});
         }
     }
