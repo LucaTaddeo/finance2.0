@@ -2,7 +2,6 @@ const express = require("express");
 const authenticate = require("../middlewares/auth");
 const validate = require("../middlewares/validate");
 const {body, check} = require("express-validator");
-const User = require("../model/User");
 const BankAccount = require("../model/BankAccount");
 const Transaction = require("../model/Transaction");
 const isObjectId = require("../middlewares/isObjectId");
@@ -26,9 +25,7 @@ router.post(
         // #swagger.tags = ['Transactions']
         const {title, amount, isForeseen, description, date, bankAccountId} = req.body;
 
-        const user = await User.findById(req.user.id);
-
-        if (!user) return res.status(404).json({message: "User not found"});
+        const {user} = req.auth;
 
         const bankAccount = await BankAccount.findById(bankAccountId);
 
@@ -95,9 +92,7 @@ router.post(
         // #swagger.tags = ['Transactions']
         const {title, amount, isForeseen, description, date, splitTransactionDetails} = req.body;
 
-        const user = await User.findById(req.user.id);
-
-        if (!user) return res.status(404).json({message: "User not found"});
+        const {user} = req.auth;
 
         let sum = 0;
         splitTransactionDetails.map(splitTransactionDetail => {
@@ -178,9 +173,7 @@ router.post(
         // #swagger.tags = ['Transactions']
         const {title, amount, isForeseen, description, date, fromBankAccountId, toBankAccountId} = req.body;
 
-        const user = await User.findById(req.user.id);
-
-        if (!user) return res.status(404).json({message: "User not found"});
+        const {user} = req.auth;
 
         const fromBankAccount = await BankAccount.findById(fromBankAccountId);
         const fromBankAccountErrors = checkBankAccountExistanceAndOwnership(fromBankAccount, user, res);
@@ -247,13 +240,11 @@ router.get(
         // #swagger.tags = ['Transactions']
         const {id} = req.params;
 
-        const user = await User.findById(req.user.id).select("-password");
-
-        if (!user) return res.status(404).json({message: "User not found"});
+        const {user} = req.auth;
 
         const transaction = await Transaction.findById(id).populate({path: "accountsDetails.account"});
 
-        for (const accountDetail of transaction.accountsDetails){
+        for (const accountDetail of transaction.accountsDetails) {
             const bankAccount = await BankAccount.findById(accountDetail.account._id);
             const bankAccountErrors = checkBankAccountExistanceAndOwnership(bankAccount, user, res);
             if (bankAccountErrors) return res.status(403).json({message: "User can't retrieve this Transaction!"});

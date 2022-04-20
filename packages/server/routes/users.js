@@ -1,6 +1,5 @@
 const express = require("express");
 const authenticate = require("../middlewares/auth");
-const User = require("../model/User");
 const BankAccount = require("../model/BankAccount");
 const validate = require("../middlewares/validate");
 const {body} = require("express-validator");
@@ -11,9 +10,8 @@ const router = express.Router();
 router.get("/", authenticate, async (req, res) => {
     // #swagger.description = 'Get details of logged user'
     // #swagger.tags = ['Users']
-    const user = await User.findById(req.user.id).select("-password");
-    if (!user) return res.sendStatus(404); // #swagger.responses[404] = { description: 'User not Found' }
-    return res.json(user); // #swagger.responses[200] = { description: 'Returns the User', schema: { $ref: '#/definitions/User' } }
+    // #swagger.responses[404] = { description: 'User not Found' }
+    return res.json(req.auth.user); // #swagger.responses[200] = { description: 'Returns the User', schema: { $ref: '#/definitions/User' } }
 });
 
 router.patch(
@@ -29,9 +27,7 @@ router.patch(
         // #swagger.tags = ['Users']
         const {firstName, lastName, password} = req.body;
 
-        const user = await User.findById(req.user.id);
-
-        if (!user) return res.status(404).json({message: "User not found"});
+        const {user} = req.auth;
 
         firstName && (user.firstName = firstName);
         lastName && (user.lastName = lastName);
@@ -64,8 +60,8 @@ router.patch(
 router.get("/balance", authenticate, async (req, res) => {
     // #swagger.description = 'Compute balance of logged user'
     // #swagger.tags = ['Users']
-    const user = await User.findById(req.user.id).select("-password");
-    if (!user) return res.status(404).json({message: "User Not Found"});
+    const {user} = req.auth;
+
     let balance = 0;
     for (const account of user.bankAccounts) {
         const bankAccount = await BankAccount.findById(account);
@@ -79,8 +75,8 @@ router.get("/balance", authenticate, async (req, res) => {
 router.get("/foreseenBalance", authenticate, async (req, res) => {
     // #swagger.description = 'Compute foreseen balance of logged user'
     // #swagger.tags = ['Users']
-    const user = await User.findById(req.user.id).select("-password");
-    if (!user) return res.status(404).json({message: "User Not Found"});
+    const {user} = req.auth;
+
     let foreseenBalance = 0;
     for (const account of user.bankAccounts) {
         const bankAccount = await BankAccount.findById(account);
@@ -94,12 +90,10 @@ router.get("/foreseenBalance", authenticate, async (req, res) => {
 router.get("/bankAccounts", authenticate, async (req, res) => {
     // #swagger.description = 'Get the Bank Accounts of the current User'
     // #swagger.tags = ['Users']
-    const user = await User.findById(req.user.id).select("-password").populate({
+    const {user} = await req.auth.user.populate({
         path: "bankAccounts",
         select: "-transactions"
-    });
-    if (!user) return res.status(404).json({message: "User Not Found"});
-    // #swagger.responses[404] = { description: 'User not Found' }
+    }); // #swagger.responses[404] = { description: 'User not Found' }
 
     return res.json({bankAccounts: user?.bankAccounts});
     // #swagger.responses[500] = { description: 'Returns an array of Bank Accounts', schema: { $ref: '#/definitions/BankAccount' } }

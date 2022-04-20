@@ -24,14 +24,10 @@ router.post(
         // #swagger.tags = ['BankAccounts']
         const {name, description, balance, accountType} = req.body;
 
-        const user = await User.findById(req.user.id)
-            .select("-password")
-            .populate({
-                path: "bankAccounts",
-                select: "name"
-            });
-
-        if (!user) return res.sendStatus(404); // #swagger.responses[404] = { description: 'User not Found' }
+        const user = await req.auth.user.populate({
+            path: "bankAccounts",
+            select: "name"
+        });
 
         if (user.bankAccounts?.map(bankAccount => bankAccount.name).includes(name))
             return res.status(422).json({message: "User already has a Bank Account with this name!"});
@@ -93,14 +89,10 @@ router.patch(
         // #swagger.tags = ['BankAccounts']
         const {id, name, description, accountType} = req.body;
 
-        const user = await User.findById(req.user.id)
-            .select("-password")
-            .populate({
+        const user = await req.auth.user.populate({
                 path: "bankAccounts",
                 select: "name"
             });
-
-        if (!user) return res.status(404).json({message: "User not found"});
 
         if (name && user.bankAccounts?.map(bankAccount => bankAccount.name).includes(name))
             return res.status(422).json({message: "User already has a Bank Account with this name!"});
@@ -148,9 +140,7 @@ router.delete(
         // #swagger.tags = ['BankAccounts']
         const {id} = req.body;
 
-        const user = await User.findById(req.user.id).select("-password");
-
-        if (!user) return res.status(404).json({message: "User not found"});
+        const {user} = req.auth;
 
         const bankAccount = await BankAccount.findById(id);
 
@@ -199,9 +189,7 @@ router.get(
         // #swagger.tags = ['BankAccounts']
         const {id} = req.params;
 
-        const user = await User.findById(req.user.id).select("-password");
-
-        if (!user) return res.status(404).json({message: "User not found"});
+        const {user} = req.auth;
 
         const bankAccount = await BankAccount.findById(id);
 
@@ -220,9 +208,7 @@ router.get(
         // #swagger.tags = ['BankAccounts']
         const {id} = req.params;
 
-        const user = await User.findById(req.user.id).select("-password");
-
-        if (!user) return res.status(404).json({message: "User not found"});
+        const {user} = req.auth;
 
         const bankAccount = await BankAccount.findById(id).populate({
             path: "transactions",
