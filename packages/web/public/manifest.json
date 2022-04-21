@@ -1,6 +1,11 @@
 {
   "short_name": "Finance2.0",
   "name": "Finance Tracker 2.0",
+  "developer": {
+    "name": "Luca Taddeo",
+    "url": "https://www.lucataddeo.com"
+  },
+  "version": "1.0",
   "icons": [
     {
       "src": "favicon.ico",
@@ -19,7 +24,7 @@
     }
   ],
   "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
+  "display": "fullscreen",
+  "theme_color": "#0070F3",
   "background_color": "#ffffff"
 }
