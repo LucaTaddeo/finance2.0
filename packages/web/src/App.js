@@ -1,18 +1,33 @@
 import React from "react";
+import {SnackbarProvider} from "notistack";
+
+import {createTheme, NextUIProvider} from "@nextui-org/react";
+
+import useDarkMode from 'use-dark-mode';
+import LoginCard from "./components/LoginCard";
+
+const lightTheme = createTheme({
+    type: 'light',
+});
+
+const darkTheme = createTheme({
+    type: 'dark',
+});
 
 const App = () => {
-    const [data, setData] = React.useState(null);
-    React.useEffect(() => {
-        fetch("/api/v1/health")
-            .then((res) => res.json())
-            .then((data) => setData(data.uptime));
-    }, []);
+    const darkMode = useDarkMode(true);
+
     return (
-        <div>
-            <header>
-                WebApp under construction [Uptime: {data}]
-            </header>
-        </div>
+        <NextUIProvider theme={darkMode.value ? darkTheme : lightTheme}>
+            <SnackbarProvider
+                maxSnack={3}
+                autoHideDuration={1500}
+                anchorOrigin={{horizontal: "center", vertical: "bottom"}}
+                preventDuplicate
+            >
+                <LoginCard/>
+            </SnackbarProvider>
+        </NextUIProvider>
     );
 }
 
