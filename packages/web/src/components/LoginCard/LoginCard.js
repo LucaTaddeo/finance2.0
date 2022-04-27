@@ -2,15 +2,23 @@ import React, {useState, useEffect} from "react";
 import {useSnackbar} from "notistack";
 import {Button, Card, Container, Divider, Input, Link, Spacer, Text} from "@nextui-org/react";
 import {motion} from "framer-motion";
+import useAuth from "../../helpers/useAuth";
+import {useLocation, useNavigate} from "react-router-dom";
 
 const LoginCard = (props) => {
     const [data, setData] = useState(null);
     const {enqueueSnackbar} = useSnackbar();
 
+    const auth = useAuth();
+    const location = useLocation();
+    const navigate = useNavigate();
+    const from = location.state?.from?.pathname || "/";
+
     const [username, setUsername] = useState();
     const [password, setPassword] = useState("");
 
     useEffect(() => {
+        from !== "/" && enqueueSnackbar("Login to access restricted pages!", {variant: "error"});
         fetch("/api/v1/health")
             .then((res) => res.json())
             .then((data) => setData(data.uptime));
@@ -18,6 +26,7 @@ const LoginCard = (props) => {
 
     const loginHandler = (e) => {
         e.preventDefault();
+        auth.login("pippo", () => {navigate(from, {replace: true})});
     }
 
     return (
