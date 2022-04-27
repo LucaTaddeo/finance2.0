@@ -7,7 +7,6 @@ import useDarkMode from 'use-dark-mode';
 import Login from "./pages/Login";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import Page404 from "./pages/Page404";
-import AuthProvider from "./context/AuthProvider";
 import {routes} from "./routes";
 import RequireAuth from "./helpers/RequireAuth";
 import useAuth from "./helpers/useAuth";
