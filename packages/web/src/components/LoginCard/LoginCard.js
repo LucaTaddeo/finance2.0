@@ -4,6 +4,7 @@ import {Button, Card, Container, Divider, Input, Link, Spacer, Text} from "@next
 import {motion} from "framer-motion";
 import useAuth from "../../helpers/useAuth";
 import {useLocation, useNavigate} from "react-router-dom";
+import {login} from "../../api/AuthenticationAPI";
 
 const LoginCard = (props) => {
     const [data, setData] = useState(null);
@@ -18,15 +19,32 @@ const LoginCard = (props) => {
     const [password, setPassword] = useState("");
 
     useEffect(() => {
-        from !== "/" && enqueueSnackbar("Login to access restricted pages!", {variant: "error"});
-        fetch("/api/v1/health")
-            .then((res) => res.json())
-            .then((data) => setData(data.uptime));
+        from !== "/" && enqueueSnackbar("You need to login to visit that page!", {variant: "error"});
     }, [setData]);
 
     const loginHandler = (e) => {
         e.preventDefault();
-        auth.login("pippo", () => {navigate(from, {replace: true})});
+        login(username, password)
+            .then(res =>
+                auth.login(res.data.user, res.data.token, () => {
+                    navigate(from, {replace: true})
+                }))
+            .catch(err => {
+                switch (err?.response?.status) {
+                    case 400: // TODO sync this with errors on input fields
+                        enqueueSnackbar("Validation error occured!", {variant: "error"});
+                        break;
+                    case 401:
+                        enqueueSnackbar(err.response.data.message, {variant: "error"});
+                        break;
+                    case 500:
+                        enqueueSnackbar("500: Internal Server Error!", {variant: "error"});
+                        break;
+                    default:
+                        enqueueSnackbar("An error occured!", {variant: "error"});
+                        break;
+                }
+            });
     }
 
     return (
