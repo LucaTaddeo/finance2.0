@@ -1,10 +1,13 @@
 import React, {useState} from 'react';
-import {Button, Card, Container, Divider, Input, Link, Row, Spacer, Text} from "@nextui-org/react";
+import {Button, Card, Container, Divider, Input, Link, Spacer, Text} from "@nextui-org/react";
 import {useSnackbar} from "notistack";
 import {Grid, Hidden} from "@mui/material";
 import {motion} from "framer-motion";
+import {signup} from "../../api/AuthenticationAPI";
 
 const RegistrationCard = (props) => {
+    const {switchToLogin, setPresetUsername, setPresetPassword} = props;
+
     const {enqueueSnackbar} = useSnackbar();
 
     const [username, setUsername] = useState("");
@@ -12,9 +15,35 @@ const RegistrationCard = (props) => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
+    const [isFormValid, setIsFormValid] = useState(true);
 
     const registrationHandler = (e) => {
         e.preventDefault();
+        if (isFormValid) {
+            signup(firstName, lastName, username, password)
+                .then(res => {
+                    enqueueSnackbar("New user created! Logging in...", {variant: "success"});
+                    setPresetUsername(username);
+                    setPresetPassword(password);
+                    switchToLogin();
+                })
+                .catch(err => {
+                    switch (err?.response?.status) {
+                        case 400: // TODO sync this with errors on input fields
+                            enqueueSnackbar("Validation error occured!", {variant: "error"});
+                            break;
+                        case 422:
+                            enqueueSnackbar("Username already in use!", {variant: "error"});
+                            break;
+                        case 500:
+                            enqueueSnackbar("500: Internal Server Error!", {variant: "error"});
+                            break;
+                        default:
+                            enqueueSnackbar("An error occured!", {variant: "error"});
+                            break;
+                    }
+                })
+        }
     }
 
     return (
@@ -22,7 +51,7 @@ const RegistrationCard = (props) => {
             animate={{opacity: 1, x: 0}}
             initial={{opacity: 0, x: -20}}
             exit={{opacity: 0, x: 20}}
-            transition={{ duration: 0.25 }}
+            transition={{duration: 0.25}}
             style={{
                 width: "100%",
                 position: "fixed",
@@ -77,11 +106,12 @@ const RegistrationCard = (props) => {
 
                             <Spacer y={1.2}/>
 
-                            <Text><Link onClick={props.switchToLogin}>Already have an account? Login now!</Link></Text>
+                            <Text><Link onClick={switchToLogin}>Already have an account? Login now!</Link></Text>
                             <Spacer y={1.2}/>
 
 
                             <Button
+                                disabled={!isFormValid}
                                 type={"submit"}
                                 color="gradient" shadow style={{width: "100%"}}>
                                 Register

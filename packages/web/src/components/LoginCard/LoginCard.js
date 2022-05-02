@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import {useSnackbar} from "notistack";
 import {Button, Card, Container, Divider, Input, Link, Spacer, Text} from "@nextui-org/react";
 import {motion} from "framer-motion";
@@ -6,7 +6,11 @@ import useAuth from "../../helpers/useAuth";
 import {useLocation, useNavigate} from "react-router-dom";
 import {login} from "../../api/AuthenticationAPI";
 
+// TODO implement react hook form?
+
 const LoginCard = (props) => {
+    const {switchToRegistration, presetUsername, presetPassword} = props;
+
     const [data, setData] = useState(null);
     const {enqueueSnackbar} = useSnackbar();
 
@@ -15,11 +19,12 @@ const LoginCard = (props) => {
     const navigate = useNavigate();
     const from = location.state?.from?.pathname || "/";
 
-    const [username, setUsername] = useState();
-    const [password, setPassword] = useState("");
+    const [username, setUsername] = useState(presetUsername);
+    const [password, setPassword] = useState(presetPassword);
 
     useEffect(() => {
-        from !== "/" && enqueueSnackbar("You need to login to visit that page!", {variant: "error"});
+        from !== "/" && enqueueSnackbar("Please, login to visit the page!", {variant: "error"});
+
     }, [setData]);
 
     const loginHandler = (e) => {
@@ -78,7 +83,7 @@ const LoginCard = (props) => {
                                             value={password} onChange={e => setPassword(e.target.value)} required/>
                             <Spacer y={1.2}/>
 
-                            <Text><Link onClick={props.switchToRegistration}>Don't have an account? Create one
+                            <Text><Link onClick={switchToRegistration}>Don't have an account? Create one
                                 now!</Link></Text>
                             <Spacer y={1.2}/>
 
