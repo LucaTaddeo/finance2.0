@@ -50,7 +50,7 @@ app.use(apiRoot + '/docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
 if (process.env.NODE_ENV === "production" || process.env.NODE_ENV === "staging") {
     app.use(express.static("../web/build"));
     app.get("*", (req, res) => {
-        res.sendFile(path.join(__dirname + "../web/build/index.html"));
+        res.sendFile(path.join(__dirname + "/../web/build/index.html"));
     });
 }
 
