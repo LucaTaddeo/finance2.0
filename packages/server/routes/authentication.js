@@ -13,7 +13,7 @@ router.post(
         body("firstName", "Provide a Valid First Name").notEmpty(),
         body("lastName", "Provide a Valid Last Name").notEmpty(),
         body("username", "Provide a Valid Username").notEmpty(),
-        body("password", "Provide a Valid Password").notEmpty().matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/, "i")
+        body("password", "Provide a Valid Password").notEmpty().matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[.-@$!%*?&])[A-Za-z\d.-@$!%*?&]{8,}$/, "i")
     ]),
     async (req, res) => {
         // #swagger.description = 'Sign Up to create a new user'
