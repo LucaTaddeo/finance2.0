@@ -4,11 +4,14 @@ import {useSnackbar} from "notistack";
 import {Grid, Hidden} from "@mui/material";
 import {motion} from "framer-motion";
 import {signup} from "../../api/AuthenticationAPI";
+import LoadingContainer from "../LoadingContainer";
 
 const RegistrationCard = (props) => {
     const {switchToLogin, setPresetUsername, setPresetPassword} = props;
 
     const {enqueueSnackbar} = useSnackbar();
+
+    const [isLoading, setIsLoading] = useState(false);
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
@@ -19,6 +22,7 @@ const RegistrationCard = (props) => {
 
     const registrationHandler = (e) => {
         e.preventDefault();
+        setIsLoading(true);
         if (isFormValid) {
             signup(firstName, lastName, username, password)
                 .then(res => {
@@ -26,6 +30,7 @@ const RegistrationCard = (props) => {
                     setPresetUsername(username);
                     setPresetPassword(password);
                     switchToLogin();
+                    setIsLoading(false);
                 })
                 .catch(err => {
                     switch (err?.response?.status) {
@@ -42,7 +47,7 @@ const RegistrationCard = (props) => {
                             enqueueSnackbar("An error occured!", {variant: "error"});
                             break;
                     }
-                })
+                }).finally(() => setIsLoading(false))
         }
     }
 
@@ -52,73 +57,74 @@ const RegistrationCard = (props) => {
             initial={{opacity: 0, x: -20}}
             exit={{opacity: 0, x: 20}}
             transition={{duration: 0.25}}
-            style={{
-                width: "100%",
-                position: "fixed",
-                top: "50%",
-                left: "50%",
-                translateX: "-50%",
-                translateY: "-50%",
-            }}>
+            key={2}>
             <Container xs>
-                <Card shadow>
-                    <Card.Header>
-                        <Text h3 b>Register</Text>
-                    </Card.Header>
-                    <Divider/>
+                <motion.div layout>
 
-                    <Card.Body css>
-                        <form onSubmit={registrationHandler}>
-                            <Spacer y={1.2}/>
-                            <Grid container columnSpacing={3}>
-                                <Grid item xs={12} sm={6}>
-                                    <Input bordered clearable placeholder="First Name*" width="100%"
-                                           aria-label="First Name" required value={firstName}
-                                           onChange={e => setFirstName(e.target.value)}/>
-                                </Grid>
-                                <Hidden smUp><Spacer y={1.2}/></Hidden>
-                                <Grid item xs={12} sm={6}>
-                                    <Input bordered clearable placeholder="Last Name*" width="100%"
-                                           aria-label="Last Name" required value={lastName}
-                                           onChange={e => setLastName(e.target.value)}/>
-                                </Grid>
-                            </Grid>
+                    <Card shadow>
+                        <Card.Header as={motion.div} layout={"position"}>
+                            <Text h3 b>Register</Text>
+                        </Card.Header>
+                        <Divider/>
 
-                            <Spacer y={1.2}/>
+                        <Card.Body css>
+                            <LoadingContainer isLoading={isLoading}>
+                                <form onSubmit={registrationHandler}>
+                                    <Spacer y={1.2}/>
+                                    <Grid container columnSpacing={3}>
+                                        <Grid item xs={12} sm={6}>
+                                            <Input bordered clearable placeholder="First Name*" width="100%"
+                                                   aria-label="First Name" required value={firstName}
+                                                   onChange={e => setFirstName(e.target.value)}/>
+                                        </Grid>
+                                        <Hidden smUp><Spacer y={1.2}/></Hidden>
+                                        <Grid item xs={12} sm={6}>
+                                            <Input bordered clearable placeholder="Last Name*" width="100%"
+                                                   aria-label="Last Name" required value={lastName}
+                                                   onChange={e => setLastName(e.target.value)}/>
+                                        </Grid>
+                                    </Grid>
 
-                            <Input bordered clearable placeholder="Username*" width="100%" aria-label="Username"
-                                   required value={username} onChange={e => setUsername(e.target.value)}/>
-                            <Spacer y={1.2}/>
+                                    <Spacer y={1.2}/>
 
-                            <Grid container columnSpacing={3}>
-                                <Grid item xs={12} sm={6}>
-                                    <Input.Password bordered placeholder="Password*" width="100%" aria-label="Password"
-                                                    required value={password}
-                                                    onChange={e => setPassword(e.target.value)}/>
-                                </Grid>
-                                <Hidden smUp><Spacer y={1.2}/></Hidden>
-                                <Grid item xs={12} sm={6}>
-                                    <Input.Password bordered placeholder="Confirm Password*" width="100%"
-                                                    aria-label="Confirm Password*" required value={confirmPassword}
-                                                    onChange={e => setConfirmPassword(e.target.value)}/>
-                                </Grid>
-                            </Grid>
+                                    <Input bordered clearable placeholder="Username*" width="100%" aria-label="Username"
+                                           required value={username} onChange={e => setUsername(e.target.value)}/>
+                                    <Spacer y={1.2}/>
 
-                            <Spacer y={1.2}/>
+                                    <Grid container columnSpacing={3}>
+                                        <Grid item xs={12} sm={6}>
+                                            <Input.Password bordered placeholder="Password*" width="100%"
+                                                            aria-label="Password"
+                                                            required value={password}
+                                                            onChange={e => setPassword(e.target.value)}/>
+                                        </Grid>
+                                        <Hidden smUp><Spacer y={1.2}/></Hidden>
+                                        <Grid item xs={12} sm={6}>
+                                            <Input.Password bordered placeholder="Confirm Password*" width="100%"
+                                                            aria-label="Confirm Password*" required
+                                                            value={confirmPassword}
+                                                            onChange={e => setConfirmPassword(e.target.value)}/>
+                                        </Grid>
+                                    </Grid>
 
-                            <Text><Link onClick={switchToLogin}>Already have an account? Login now!</Link></Text>
-                            <Spacer y={1.2}/>
+                                    <Spacer y={1.2}/>
+
+                                    <Text><Link onClick={switchToLogin}>Already have an account? Login
+                                        now!</Link></Text>
+                                    <Spacer y={1.2}/>
 
 
-                            <Button
-                                disabled={!isFormValid}
-                                type={"submit"}
-                                color="gradient" shadow style={{width: "100%"}}>
-                                Register
-                            </Button>
-                        </form>
-                    </Card.Body>
-                </Card>
+                                    <Button
+                                        disabled={!isFormValid}
+                                        type={"submit"}
+                                        color="gradient" shadow style={{width: "100%"}}>
+                                        Register
+                                    </Button>
+                                </form>
+                            </LoadingContainer>
+                        </Card.Body>
+                    </Card>
+                </motion.div>
             </Container>
         </motion.div>
     );

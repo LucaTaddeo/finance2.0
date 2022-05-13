@@ -1,17 +1,19 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useLayoutEffect, useState} from "react";
 import {useSnackbar} from "notistack";
 import {Button, Card, Container, Divider, Input, Link, Spacer, Text} from "@nextui-org/react";
 import {motion} from "framer-motion";
 import useAuth from "../../helpers/useAuth";
 import {useLocation, useNavigate} from "react-router-dom";
 import {login} from "../../api/AuthenticationAPI";
+import LoadingContainer from "../LoadingContainer";
 
 // TODO implement react hook form?
 
 const LoginCard = (props) => {
     const {switchToRegistration, presetUsername, presetPassword} = props;
 
-    const [data, setData] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+
     const {enqueueSnackbar} = useSnackbar();
 
     const auth = useAuth();
@@ -24,15 +26,15 @@ const LoginCard = (props) => {
 
     useEffect(() => {
         from !== "/" && enqueueSnackbar("Please, login to visit the page!", {variant: "error"});
-
-    }, [setData]);
+    }, []); // FIXME: on logout, there should be no "from" field
 
     const loginHandler = (e) => {
         e.preventDefault();
+        setIsLoading(true);
         login(username, password)
             .then(res =>
                 auth.login(res.data.user, res.data.token, () => {
-                    navigate(from, {replace: true})
+                    navigate(from, {replace: true});
                 }))
             .catch(err => {
                 switch (err?.response?.status) {
@@ -49,8 +51,12 @@ const LoginCard = (props) => {
                         enqueueSnackbar("An error occured!", {variant: "error"});
                         break;
                 }
-            });
+            }).finally(() => setIsLoading(false));
     }
+
+    useLayoutEffect(() => {
+
+    }, [])
 
     return (
         <motion.div
@@ -58,43 +64,53 @@ const LoginCard = (props) => {
             initial={{opacity: 0, x: -20}}
             exit={{opacity: 0, x: 20}}
             transition={{duration: 0.25}}
-            style={{
-                width: "100%",
-                position: "fixed",
-                top: "50%",
-                left: "50%",
-                translateX: "-50%",
-                translateY: "-50%",
-            }}>
+            key={1}>
             <Container xs>
-                <Card shadow>
-                    <Card.Header>
-                        <Text h3 b>Login</Text>
-                    </Card.Header>
-                    <Divider/>
-                    <Card.Body css>
-                        <form onSubmit={loginHandler}>
-                            <Spacer y={1.2}/>
-                            <Input bordered clearable placeholder="Username" width="100%" aria-label="Username"
-                                   value={username} onChange={e => setUsername(e.target.value)} required/>
-                            <Spacer y={1.2}/>
+                <motion.div layout>
+                    <Card shadow>
 
-                            <Input.Password bordered placeholder="Password" width="100%" aria-label="Password"
-                                            value={password} onChange={e => setPassword(e.target.value)} required/>
-                            <Spacer y={1.2}/>
+                        <Card.Header as={motion.div} layout={"position"}>
+                            <Text h3 b>Login</Text>
+                        </Card.Header>
 
-                            <Text><Link onClick={switchToRegistration}>Don't have an account? Create one
-                                now!</Link></Text>
-                            <Spacer y={1.2}/>
+                        <Divider/>
 
-                            <Button
-                                type="submit"
-                                color="gradient" shadow style={{width: "100%"}}>
-                                Login
-                            </Button>
-                        </form>
-                    </Card.Body>
-                </Card>
+                        <Card.Body css>
+                            <LoadingContainer isLoading={isLoading}>
+                                <form onSubmit={loginHandler}>
+                                    <Spacer y={1.2}/>
+
+                                    <Input bordered clearable placeholder="Username" width="100%"
+                                           aria-label="Username"
+                                           value={username} onChange={e => setUsername(e.target.value)}
+                                           required/>
+                                    <Spacer y={1.2}/>
+
+                                    <Input.Password bordered placeholder="Password" width="100%"
+                                                    aria-label="Password"
+                                                    value={password} onChange={e => setPassword(e.target.value)}
+                                                    required/>
+
+                                    <Spacer y={1.2}/>
+
+                                    <Text>
+                                        <Link onClick={switchToRegistration}>
+                                            Don't have an account? Create one now!
+                                        </Link>
+                                    </Text>
+
+                                    <Spacer y={1.2}/>
+
+                                    <Button
+                                        type="submit"
+                                        color="gradient" shadow style={{width: "100%"}}>
+                                        Login
+                                    </Button>
+                                </form>
+                            </LoadingContainer>
+                        </Card.Body>
+                    </Card>
+                </motion.div>
             </Container>
         </motion.div>
     )
