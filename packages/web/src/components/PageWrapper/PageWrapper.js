@@ -84,7 +84,7 @@ const PageWrapper = (props) => {
     //     setOpen(false);
     // };
 
-    return (<Box sx={{display: 'flex'}}>
+    return (<Box sx={{display: 'flex', flexGrow: 1, minHeight: "100vh"}}>
         {/*            <AppBar position="fixed" open={open}>
                 <Toolbar>
                     <IconButton
@@ -199,7 +199,7 @@ const PageWrapper = (props) => {
             animate={{opacity: 1, x: 0}}
             initial={{opacity: 0, x: 20}}
             exit={{opacity: 0, x: -20}}
-            transition={{duration: 0.25}}>
+            transition={{duration: 0.25}} style={{width: "100vw"}}>
             <Box component="main" sx={{flexGrow: 1, p: 3}}>
                 {/*<DrawerHeader />*/}
                 {props.children}
