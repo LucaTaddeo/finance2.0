@@ -57,7 +57,7 @@ LoadingContainer.propTypes = {
 }
 LoadingContainer.defaultProps = {
     isLoading: true,
-    type: "gradient",
+    type: "default",
     text: "",
     size: "md",
     color: "primary",
