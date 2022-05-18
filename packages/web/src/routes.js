@@ -1,5 +1,16 @@
+import {
+    AccountBalanceTwoTone, AccountBalanceWalletTwoTone,
+    AnalyticsTwoTone,
+    CurrencyExchangeTwoTone,
+    HomeTwoTone,
+    SettingsTwoTone
+} from "@mui/icons-material";
+import {Text} from "@nextui-org/react";
+
 export const PAGES = {
     HOME: "Home",
+    STATS: "Statistics",
+    TRANSACTIONS_LIST: "Transactions List",
     BANK_ACCOUNT: "Bank Account",
     TRANSACTION: "Transaction",
     SETTINGS: "Settings"
@@ -9,22 +20,44 @@ export const routes = [
     {
         index: true,
         name: PAGES.HOME,
-        icon: "",
-        path: ""
+        icon: <HomeTwoTone/>,
+        path: "/",
+        section: 1,
+        component: <Text>Home</Text>
+    },
+    {
+        name: PAGES.TRANSACTIONS_LIST,
+        icon: <AccountBalanceWalletTwoTone/>,
+        path: "/transactions",
+        section: 1,
+        component: <Text>Transactions</Text>
+
+    },
+    {
+        name: PAGES.STATS,
+        icon: <AnalyticsTwoTone/>,
+        path: "/stats",
+        section: 1,
+        component: <Text>Stats</Text>
     },
     {
         name: PAGES.BANK_ACCOUNT,
-        icon: "",
-        path: "bankAccount/:id"
+        icon: <AccountBalanceTwoTone/>,
+        path: "/bankAccount/:id",
+        component: <Text>Single Bank Account</Text>
+
     },
     {
         name: PAGES.TRANSACTION,
-        icon: "",
-        path: "transaction/:id"
+        icon: <CurrencyExchangeTwoTone/>,
+        path: "/transaction/:id",
+        component: <Text>Single Transaction</Text>
     },
     {
         name: PAGES.SETTINGS,
-        icon: "",
-        path: "settings"
+        icon: <SettingsTwoTone/>,
+        path: "/settings",
+        section: 2,
+        component: <Text>Settings</Text>
     }
 ];
