@@ -1,7 +1,7 @@
 import React from "react";
 import {SnackbarProvider} from "notistack";
 
-import {createTheme as createNextUiTheme, NextUIProvider, Text} from "@nextui-org/react";
+import {createTheme as createNextUiTheme, NextUIProvider} from "@nextui-org/react";
 import {createTheme as createMuiTheme, ThemeProvider as MuiProvider} from '@mui/material/styles';
 
 import useDarkMode from 'use-dark-mode';
@@ -44,7 +44,7 @@ const muiLightTheme = createMuiTheme({
 const App = () => {
     const darkMode = useDarkMode(true);
     const auth = useAuth();
-    console.log(lightTheme.colors)
+
     return (
         <MuiProvider theme={darkMode.value ? muiDarkTheme : muiLightTheme}>
             <NextUIProvider theme={darkMode.value ? darkTheme : lightTheme}>
@@ -58,15 +58,16 @@ const App = () => {
                         <Routes>
                             <Route path="/">
                                 <Route index={!auth.isLoggedIn()} element={<Login/>}/>
-                                {routes.map(({path, page, showNavbar, index, fullHeight, name}) =>
+                                {routes.map(({path, component, hideNavbar, index, name}) =>
                                     <Route
                                         index={auth.isLoggedIn() && index}
                                         path={path}
                                         key={path}
+                                        name={name}
                                         element={
                                             <RequireAuth>
-                                                <PageWrapper>
-                                                    <Text onClick={() => auth.logout()}>{name}</Text>
+                                                <PageWrapper hideNavbar={hideNavbar}>
+                                                    {component}
                                                 </PageWrapper>
                                             </RequireAuth>
                                         }
