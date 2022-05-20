@@ -2,6 +2,7 @@ import React from 'react';
 import {Button, Card, Col, Container, Grid, Row, Text} from "@nextui-org/react";
 import {Divider} from "@mui/material";
 import {Link} from "react-router-dom";
+import useMobileDetect from 'use-mobile-detect-hook';
 
 const transactions = [1, 2, 3, 4, 5];
 
@@ -85,8 +86,10 @@ const TransactionsCard = (props) => {
 }
 
 const Home = (props) => {
+    const device = useMobileDetect();
+
     return (
-        <Container xs style={{marginTop: "6rem"}}>
+        <Container xs style={device.isMobile() ? {marginTop: "2.5rem"} : {marginTop: "6rem"}}>
             <Text h2 style={{marginBottom: "2rem"}}>Home</Text>
             <BalanceCard/>
             <TransactionsCard/>
