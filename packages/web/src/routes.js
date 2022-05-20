@@ -6,6 +6,7 @@ import {
     SettingsTwoTone
 } from "@mui/icons-material";
 import {Text} from "@nextui-org/react";
+import Home from "./pages/Home";
 
 export const PAGES = {
     HOME: "Home",
@@ -23,7 +24,7 @@ export const routes = [
         icon: <HomeTwoTone/>,
         path: "/",
         section: 1,
-        component: <Text>Home</Text>
+        component: <Home />
     },
     {
         name: PAGES.TRANSACTIONS_LIST,
