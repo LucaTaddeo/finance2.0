@@ -7,11 +7,13 @@ import {
 } from "@mui/icons-material";
 import {Text} from "@nextui-org/react";
 import Home from "./pages/Home";
+import Wallet from "./pages/Wallet";
 
 export const PAGES = {
     HOME: "Home",
     STATS: "Statistics",
     TRANSACTIONS_LIST: "Transactions List",
+    WALLET: "Wallet",
     BANK_ACCOUNT: "Bank Account",
     TRANSACTION: "Transaction",
     SETTINGS: "Settings"
@@ -30,9 +32,15 @@ export const routes = [
         name: PAGES.TRANSACTIONS_LIST,
         icon: <AccountBalanceWalletTwoTone/>,
         path: "/transactions",
+        component: <Text>Transactions</Text>,
+        hideNavbar: true
+    },
+    {
+        name: PAGES.WALLET,
         section: 1,
-        component: <Text>Transactions</Text>
-
+        icon: <AccountBalanceWalletTwoTone/>,
+        path: "/wallet",
+        component: <Wallet />
     },
     {
         name: PAGES.STATS,
@@ -46,7 +54,6 @@ export const routes = [
         icon: <AccountBalanceTwoTone/>,
         path: "/bankAccount/:id",
         component: <Text>Single Bank Account</Text>
-
     },
     {
         name: PAGES.TRANSACTION,
