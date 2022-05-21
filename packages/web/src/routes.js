@@ -8,6 +8,8 @@ import {
 import {Text} from "@nextui-org/react";
 import Home from "./pages/Home";
 import Wallet from "./pages/Wallet";
+import Stats from "./pages/Stats";
+import Settings from "./pages/Settings";
 
 export const PAGES = {
     HOME: "Home",
@@ -47,7 +49,7 @@ export const routes = [
         icon: <AnalyticsTwoTone/>,
         path: "/stats",
         section: 1,
-        component: <Text>Stats</Text>
+        component: <Stats />
     },
     {
         name: PAGES.BANK_ACCOUNT,
@@ -66,6 +68,6 @@ export const routes = [
         icon: <SettingsTwoTone/>,
         path: "/settings",
         section: 2,
-        component: <Text>Settings</Text>
+        component: <Settings />
     }
 ];
