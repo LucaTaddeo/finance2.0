@@ -1,12 +1,13 @@
 import React from 'react';
 import {Text} from "@nextui-org/react";
+import CenteredPageLayout from "../../components/CenteredPageLayout";
 
 const Wallet = (props) => {
 
   return (
-   <>
-    <Text>Wallet</Text>
-   </>
+   <CenteredPageLayout title={"Wallet"}>
+
+   </CenteredPageLayout>
   );
 }
 
