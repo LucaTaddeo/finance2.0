@@ -1,8 +1,8 @@
 import React from 'react';
-import {Button, Card, Col, Container, Grid, Row, Text} from "@nextui-org/react";
+import {Button, Card, Col, Grid, Row, Text} from "@nextui-org/react";
 import {Divider} from "@mui/material";
 import {Link} from "react-router-dom";
-import useMobileDetect from 'use-mobile-detect-hook';
+import CenteredPageLayout from "../../components/CenteredPageLayout/CenteredPageLayout";
 
 const transactions = [1, 2, 3, 4, 5];
 
@@ -86,14 +86,12 @@ const TransactionsCard = (props) => {
 }
 
 const Home = (props) => {
-    const device = useMobileDetect();
 
     return (
-        <Container xs style={device.isMobile() ? {marginTop: "2.5rem"} : {marginTop: "6rem"}}>
-            <Text h2 style={{marginBottom: "2rem"}}>Home</Text>
+        <CenteredPageLayout title={"Home"}>
             <BalanceCard/>
             <TransactionsCard/>
-        </Container>
+        </CenteredPageLayout>
     );
 }
 
