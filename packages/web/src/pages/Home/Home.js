@@ -3,14 +3,13 @@ import {Button, Card, Col, Grid, Row, Text} from "@nextui-org/react";
 import {Divider} from "@mui/material";
 import {Link} from "react-router-dom";
 import CenteredPageLayout from "../../components/CenteredPageLayout/CenteredPageLayout";
-import SideModal from "../../components/SideModal";
 import {AnimatePresence} from "framer-motion";
+import {SideModal} from "../../components/SideModal";
 
 const transactions = [1, 2, 3, 4, 5];
 
 const BalanceCard = (props) => {
-    return (
-        <Card
+    return (<Card
             color={"gradient"}
             style={{
                 width: "100%",
@@ -42,30 +41,24 @@ const BalanceCard = (props) => {
                     </Grid>
                 </Grid.Container>
             </Card.Body>
-        </Card>
-    );
+        </Card>);
 }
 
-const TransactionRow = ({clickHandler}) => {
-    return (
-        <>
+const TransactionRow = ({clickHandler, transaction}) => {
+    return (<>
             <Button
                 onClick={() => clickHandler()}
                 light
                 style={{
-                    width: "100%",
-                    textAlign: "left",
-                    justifyContent: "left",
+                    width: "100%", textAlign: "left", justifyContent: "left",
                 }}>
-                <Text style={{margin: 0}}>Transaction</Text>
+                <Text style={{margin: 0}}>Transaction {transaction}</Text>
             </Button>
-        </>
-    )
+        </>)
 }
 
 const TransactionsCard = ({openTransactionModal, setModalDetails}) => {
-    return (
-        <Card style={{marginTop: "2rem"}} shadow={false} bordered>
+    return (<Card style={{marginTop: "2rem"}} shadow={false} bordered>
             <Card.Header>
                 <Row style={{alignItems: "baseline"}}
                      justify={"space-between"}>
@@ -79,20 +72,18 @@ const TransactionsCard = ({openTransactionModal, setModalDetails}) => {
                         setModalDetails(t);
                         openTransactionModal();
                     }
-                    let transactionRow = <TransactionRow key={i} clickHandler={clickHandler}/>;
+                    let transactionRow = <TransactionRow key={i} clickHandler={clickHandler} transaction={t}/>;
                     if (i < transactions.length - 1) {
-                        transactionRow =
-                            <div key={i}>
-                                <TransactionRow clickHandler={clickHandler}/>
-                                <Divider style={{paddingTop: "0.2rem", marginBottom: "0.2rem"}}/>
-                            </div>
+                        transactionRow = <div key={i}>
+                            <TransactionRow clickHandler={clickHandler} transaction={t}/>
+                            <Divider style={{paddingTop: "0.2rem", marginBottom: "0.2rem"}}/>
+                        </div>
                     }
                     return transactionRow;
 
                 })}
             </Card.Body>
-        </Card>
-    )
+        </Card>)
 }
 
 const Home = (props) => {
@@ -104,15 +95,16 @@ const Home = (props) => {
         setSelectedTransaction(undefined);
     };
 
-    return (
-        <AnimatePresence>
+    return (<AnimatePresence>
             <CenteredPageLayout key={1} title={"Home"} isModalOpen={open}>
                 <BalanceCard/>
                 <TransactionsCard setModalDetails={setSelectedTransaction} openTransactionModal={() => setOpen(true)}/>
             </CenteredPageLayout>
-            <SideModal key={2} title={"Titolo"} body={selectedTransaction} open={open} handleClose={handleClose}/>
-        </AnimatePresence>
-    );
+            <SideModal key={2} open={open} handleClose={handleClose}>
+                <SideModal.Header>Transaction {selectedTransaction}</SideModal.Header>
+                <SideModal.Body>This will be the description</SideModal.Body>
+            </SideModal>
+        </AnimatePresence>);
 }
 
 export default Home;
