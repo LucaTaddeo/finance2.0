@@ -7,11 +7,14 @@ import PropTypes from 'prop-types';
 
 export const Body = ({children}) => children;
 
-export const Header = ({size, children}) => <Text size={size}>{children}</Text>;
-Header.propTypes = {size: PropTypes.number}
-Header.defaultProps = {size: 18}
-
 export const Footer = ({children}) => children;
+
+export const Overline = ({text, size, color}) => <Text
+    size={size}
+    color={color}>{text}</Text>
+Overline.propTypes = {text: PropTypes.string.isRequired, size: PropTypes.number, color: PropTypes.string}
+Overline.defaultProps = {size: 15, color: "grey"}
+
 
 export const SideModal = ({open, handleClose, closeOnClickAway, children}) => {
     const divStyles = {
@@ -43,23 +46,22 @@ export const SideModal = ({open, handleClose, closeOnClickAway, children}) => {
                 >
                     <Card.Header>
                         <Row style={{alignItems: "center"}} justify={"space-between"}>
-                            {React.Children.map(children, child => {
-                                if (child.type === Header) return child
-                            })}
                             <IconButton onClick={handleClose}>
                                 <Close style={{color: "grey"}}/>
                             </IconButton>
+                            {React.Children.map(children, child => {
+                                if (child?.type === Overline) return child
+                            })}
                         </Row>
-
                     </Card.Header>
                     <Card.Body>
                         {React.Children.map(children, child => {
-                            if (child.type === Body) return child
+                            if (child?.type === Body) return child
                         })}
                     </Card.Body>
                     <Card.Footer>
                         {React.Children.map(children, child => {
-                            if (child.type === Footer) return child
+                            if (child?.type === Footer) return child
                         })}
                     </Card.Footer>
                 </Card>
@@ -77,7 +79,7 @@ SideModal.defaultProps = {
 }
 
 SideModal.Body = Body;
-SideModal.Header = Header;
 SideModal.Footer = Footer;
+SideModal.Overline = Overline;
 
 export default SideModal;
